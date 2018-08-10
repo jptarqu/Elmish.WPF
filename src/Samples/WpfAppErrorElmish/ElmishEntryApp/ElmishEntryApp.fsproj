@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net471</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MaterialDesignThemes" Version="2.4.1.1101" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WpfAppErrorElmishViews\WpfAppErrorElmishViews.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Elmish.WPF">
+      <HintPath>..\..\Elmish.WPF\build_output\Elmish.WPF.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.Windows" />
+  </ItemGroup>
+
+</Project>
