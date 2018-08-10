@@ -130,11 +130,12 @@ and ViewModelBase<'model, 'msg>(m:'model, dispatch, propMap: ViewBindings<'model
                     | Ok msg -> 
                         if errors.Remove(binder.Name) then errorsChanged()
                         dispatch msg 
-                    | Error err ->
+                    | Error (err:string, msg) ->
                         match errors.TryGetValue binder.Name with
                         | true, errs -> errors.[binder.Name] <- err :: errs
                         | false, _ -> errors.Add(binder.Name, [err])
                         errorsChanged()
+                        dispatch msg 
                 with | _ -> ()
             | _ -> invalidOp "Unable to set read-only member"
         false

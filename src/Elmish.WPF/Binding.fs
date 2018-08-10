@@ -4,9 +4,10 @@ open System
 open System.Windows.Input
 open System.Windows.Data
 
+type ValidationErrorType<'msg> = string * 'msg
 type Getter<'model> = 'model -> obj
 type Setter<'model,'msg> = obj -> 'model -> 'msg
-type ValidSetter<'model,'msg> = obj -> 'model -> Result<'msg,string>
+type ValidSetter<'model,'msg> = obj -> 'model -> Result<'msg,ValidationErrorType<'msg>>
 type Execute<'model,'msg> = obj -> 'model -> 'msg
 type CanExecute<'model> = obj -> 'model -> bool
 
@@ -36,8 +37,12 @@ and Variable<'model,'msg> =
 [<RequireQualifiedAccess>]
 module Binding =
     
+    let validationResMap (toMsg: '_msg -> 'msg) res = 
+        match res with
+        | Ok g -> Result.Ok (toMsg g)
+        | Error (str, errMsg) -> Result.Error (str, toMsg errMsg)
     // Maps a set of view bindings to its parent view bindings
-    let rec private mapViewBinding<'model,'msg,'_model,'_msg> toModel toMsg (viewBinding: ViewBindings<'_model,'_msg>) : ViewBindings<'model,'msg> =
+    let rec private mapViewBinding<'model,'msg,'_model,'_msg> toModel (toMsg: '_msg -> 'msg) (viewBinding: ViewBindings<'_model,'_msg>) : ViewBindings<'model,'msg> =
         let mapVariable =
             function
             | Bind getter ->
@@ -47,7 +52,7 @@ module Binding =
                 (toModel >> getter, fun v m -> (toModel m) |> (setter v >> toMsg))
                 |> BindTwoWay
             | BindTwoWayValidation (getter,setter) -> 
-                (toModel >> getter, fun v m -> (toModel m) |> (setter v >> Result.map toMsg))
+                (toModel >> getter, fun v m -> (toModel m) |> (setter v >> validationResMap toMsg ))
                 |> BindTwoWayValidation
             | BindCmd (exec,canExec) ->
                 ((fun v m -> (toModel m) |> exec v |> toMsg), (fun v m -> (toModel m) |> canExec v))
@@ -81,7 +86,7 @@ module Binding =
     ///<param name="getter">Gets value from the model</param>
     ///<param name="setter">Validation function, returns a Result with the message to dispatch or an error string</param>
     ///<param name="name">Binding name</param>
-    let twoWayValidation (getter: 'model -> 'a) (setter: 'a -> 'model -> Result<'msg,string>) name : ViewBinding<'model,'msg> = 
+    let twoWayValidation (getter: 'model -> 'a) (setter: 'a -> 'model -> Result<'msg,ValidationErrorType<'msg>>) name : ViewBinding<'model,'msg> = 
         name, BindTwoWayValidation (getter >> unbox, fun v m -> setter (v :?> 'a) m)
         
     ///<summary>Command binding</summary>
